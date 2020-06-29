@@ -20,7 +20,6 @@ def is_win(board):
         
     if sum(black.values()) == black[-1] and sum(white.values()) == white[-1] or possible_moves(board)==[]:
         return 'Draw'
-        
     return 'Continue playing'
 
 def march(board,y,x,dy,dx,length):
@@ -143,7 +142,7 @@ def score_of_col_one(board,col,y,x):
     
 def possible_moves(board):  
     '''
-    khởi tạo danh sách tọa độ có thể có tại danh giới các nơi đã đánh phạm vi 1 đơn vị
+    trả về các ô trống xung quanh vùng đã đánh 1 đơn vị
     '''
     #mảng taken lưu giá trị của người chơi và của máy trên bàn cờ
     taken = []
@@ -161,12 +160,12 @@ def possible_moves(board):
     '''
     for direction in directions:
         dy,dx = direction
-        for coord in taken:
-            y,x = coord
+        for yx in taken:
+            y,x = yx
             #note in[1,2,3,4]
             for length in [1]:
                 move = march(board,y,x,dy,dx,length)
-                if move not in taken and move not in cord:
+                if move not in taken and move not in yx:
                     cord[move]=False
     return cord
     
@@ -181,7 +180,7 @@ def TF34score(score3,score4):
                         return True
     return False
     
-def stupid_score(board,col,anticol,y,x):
+def evaluation(board,turn,anti,y,x):
     '''
     cố gắng di chuyển y,x
     trả về điểm số tượng trưng lợi thế 
@@ -191,9 +190,9 @@ def stupid_score(board,col,anticol,y,x):
     res,adv, dis = 0, 0, 0
     
     #tấn công
-    board[y][x]=col
+    board[y][x]=turn
     #draw_stone(x,y,colors[col])
-    sumcol = score_of_col_one(board,col,y,x)       
+    sumcol = score_of_col_one(board,turn,y,x)       
     a = winning_situation(sumcol)
     adv += a * M
     sum_sumcol_values(sumcol)
@@ -201,10 +200,10 @@ def stupid_score(board,col,anticol,y,x):
     adv +=  sumcol[-1] + sumcol[1] + 4*sumcol[2] + 8*sumcol[3] + 16*sumcol[4]
     
     #phòng thủ
-    board[y][x]=anticol
-    sumanticol = score_of_col_one(board,anticol,y,x)  
+    board[y][x]=anti
+    sumanticol = score_of_col_one(board,anti,y,x)  
     d = winning_situation(sumanticol)
-    dis += d * (M-100)
+    dis += d * (M)
     sum_sumcol_values(sumanticol)
     dis += sumanticol[-1] + sumanticol[1] + 4*sumanticol[2] + 8*sumanticol[3] + 16*sumanticol[4]
 
@@ -233,29 +232,27 @@ def winning_situation(sumcol):
             return 3
     return 0
     
-def best_move(board,col):
+def best_move(board, turn):
     '''
-    trả lại điểm số của mảng trong lợi thế của từng màu
+    trả lại nước đi tốt nhất tính được
     '''
-    if col == 'b':
-        anticol = 'r'
+    if turn == 'b':
+        anti = 'r'
     else:
-        anticol = 'b'
+        anti = 'b'
         
     movecol = (0,0)
-    maxscorecol = ''
-    # kiểm tra nếu bàn cờ rỗng thì cho vị trí random nếu không thì đưa ra giá trị trên bàn cờ nên đi 
-
+    maxscorecol = 0
     moves = possible_moves(board)
 
     for move in moves:
         y,x = move
-        if maxscorecol == '':
-            scorecol=stupid_score(board,col,anticol,y,x)
+        if maxscorecol == 0:
+            scorecol=evaluation(board,turn,anti,y,x)
             maxscorecol = scorecol
             movecol = move
         else:
-            scorecol=stupid_score(board,col,anticol,y,x)
+            scorecol=evaluation(board,turn,anti,y,x)
             if scorecol > maxscorecol:
                 maxscorecol = scorecol
                 movecol = move
