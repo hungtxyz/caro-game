@@ -11,10 +11,15 @@ def verticalScore(board):
     score = 0
     streak = 0
     start = False
+    k = False
+    score_board = [0,2,4,8,16,32,64,128,256,512,1024]
     for i in range(len(board)):
         streak = 0
         count = 0
+
         for j in range(len(board[i])-4):
+            if start:
+                k = True
             if board[i][j] != ' ' and not start:
                 start = True
                 current = board[i][j]
@@ -22,8 +27,7 @@ def verticalScore(board):
                     anti = 'r'
                 else :
                     anti = 'b'
-                j+=1
-            if start:
+            if start and k:
                 if board[i][j] == current and count<5:
                     streak+=2
                     count+=1
@@ -34,9 +38,9 @@ def verticalScore(board):
                     if count<5:
                         streak = 0
                     if current == 'b':
-                        score+=streak*streak-5
+                        score+=score_board[streak]
                     elif current == 'r':
-                        score-=streak*streak
+                        score-=score_board[streak]
                     current = anti
                     streak = 0
                     count = 0
@@ -44,4 +48,13 @@ def verticalScore(board):
                         anti = 'r'
                     else :
                         anti = 'b'
+                if count == 5:
+                    if current == 'b':
+                        score+=streak*streak
+                        streak = 0
+                        count = 0
+                    else :
+                        score-=streak*streak*2
+                        streak =0
+                        count = 0
     return score

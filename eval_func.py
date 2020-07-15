@@ -2,28 +2,11 @@ from get_moves import possible_moves, march
 
 def is_empty(board):
     return board == [[' ']*len(board)]*len(board)
-
-def is_win(board):
-    
-    black = score_of_col(board,'r')
-    white = score_of_col(board,'b')
-    
-    sum_sumcol_values(black)
-    sum_sumcol_values(white)
-    
-    if 5 in black and black[5] == 1:
-        return 'Red'
-    elif 5 in white and white[5] == 1:
-        return 'Blue'
-        
-    if sum(black.values()) == black[-1] and sum(white.values()) == white[-1] or possible_moves(board)==[]:
-        return 'Draw'
-    return 'Continue playing'
     
 def score_init(scorecol):
     '''
-    Khởi tạo hệ thống điểm
-
+    Chuyển danh sách điểm của mỗi hướng về dạng: 
+    {0: {hướng, số lần},1: {},2: {},3: {},4: {},5: {},-1: {}}
     '''
     sumcol = {0: {},1: {},2: {},3: {},4: {},5: {},-1: {}}
     for key in scorecol:
@@ -35,9 +18,10 @@ def score_init(scorecol):
             
     return sumcol
     
-def sum_sumcol_values(sumcol):
+def sumary_score(sumcol):
     '''
-    hợp nhất điểm của mỗi hướng
+    Chuyển danh sách điểm về dạng:
+    {0: số lần ,1: ,2: ,3: ,4: ,5: ,-1:}
     '''
     
     for key in sumcol:
@@ -47,7 +31,9 @@ def sum_sumcol_values(sumcol):
             sumcol[key] = sum(sumcol[key].values())
             
 def score_of_list(lis,col):
-    
+    '''
+    Tính điểm của mỗi danh sách 5 ô
+    '''
     blank = lis.count(' ')
     filled = lis.count(col)
     
@@ -60,7 +46,7 @@ def score_of_list(lis,col):
 
 def row_to_list(board,y,x,dy,dx,yf,xf):
     '''
-    trả về list của y,x từ yf,xf
+    trả về list 5 ô
     
     '''
     row = []
@@ -72,8 +58,7 @@ def row_to_list(board,y,x,dy,dx,yf,xf):
     
 def score_of_row(board,cordi,dy,dx,cordf,col):
     '''
-    trả về một list với mỗi phần tử đại diện cho số điểm của 5 khối
-
+    trả về một list với mỗi phần tử đại diện cho số điểm của mỗi 5 khối trong 9 ô 
     '''
     colscores = []
     y,x = cordi
@@ -85,28 +70,8 @@ def score_of_row(board,cordi,dy,dx,cordf,col):
     
     return colscores
 
-def score_of_col(board,col):
-    '''
-    tính toán điểm số mỗi hướng của column dùng cho is_win;
-    '''
 
-    f = len(board)
-    
-    #scores của 4 hướng đi
-    scores = {(0,1):[],(-1,1):[],(1,0):[],(1,1):[]}
-    for start in range(len(board)):
-        scores[(0,1)].extend(score_of_row(board,(start, 0), 0, 1,(start,f-1), col))
-        scores[(1,0)].extend(score_of_row(board,(0, start), 1, 0,(f-1,start), col))
-        scores[(1,1)].extend(score_of_row(board,(start, 0), 1,1,(f-1,f-1-start), col))
-        scores[(-1,1)].extend(score_of_row(board,(start,0), -1, 1,(0,start), col))
-        
-        if start + 1 < len(board):
-            scores[(1,1)].extend(score_of_row(board,(0, start+1), 1, 1,(f-2-start,f-1), col)) 
-            scores[(-1,1)].extend(score_of_row(board,(f -1 , start + 1), -1,1,(start+1,f-1), col))
-            
-    return score_init(scores)
-    
-def score_of_col_one(board,col,y,x):
+def block_counter(board,col,y,x):
     '''
     trả lại điểm số của column trong y,x theo 4 hướng,
     key: điểm số khối đơn vị đó -> chỉ ktra 5 khối thay vì toàn bộ
@@ -124,18 +89,6 @@ def score_of_col_one(board,col,y,x):
     
     return score_init(scores)
     
-
-def TF34score(score3,score4):
-    '''
-    trả lại trường hợp chắc chắn có thể thắng(4 ô liên tiếp)
-    '''
-    for key4 in score4:
-        if score4[key4] >=1:
-            for key3 in score3:
-                if key3 != key4 and score3[key3] >=2:
-                        return True
-    return False
-    
 def evaluation(board,turn,anti,y,x):
     '''
     cố gắng di chuyển y,x
@@ -148,19 +101,19 @@ def evaluation(board,turn,anti,y,x):
     #tấn công
     board[y][x]=turn
     #draw_stone(x,y,colors[col])
-    sumcol = score_of_col_one(board,turn,y,x)       
-    a = winning_situation(sumcol)
+    sumcol = block_counter(board,turn,y,x)       
+    a = score_calculate(sumcol)
     adv += a * M
-    sum_sumcol_values(sumcol)
+    sumary_score(sumcol)
     #{0: 0, 1: 15, 2: 0, 3: 0, 4: 0, 5: 0, -1: 0}
     adv +=  sumcol[-1] + sumcol[1] + 4*sumcol[2] + 8*sumcol[3] + 16*sumcol[4]
     
     #phòng thủ
     board[y][x]=anti
-    sumanticol = score_of_col_one(board,anti,y,x)  
-    d = winning_situation(sumanticol)
-    dis += d * (M-100)
-    sum_sumcol_values(sumanticol)
+    sumanticol = block_counter(board,anti,y,x)  
+    d = score_calculate(sumanticol)
+    dis += d * (M)
+    sumary_score(sumanticol)
     dis += sumanticol[-1] + sumanticol[1] + 4*sumanticol[2] + 8*sumanticol[3] + 16*sumanticol[4]
 
     res = adv + dis
@@ -168,19 +121,11 @@ def evaluation(board,turn,anti,y,x):
     board[y][x]=' '
     return res
     
-def winning_situation(sumcol):
-    '''
-    trả lại tình huống chiến thắng dạng như:
-    {0: {}, 1: {(0, 1): 4, (-1, 1): 3, (1, 0): 4, (1, 1): 4}, 2: {}, 3: {}, 4: {}, 5: {}, -1: {}}
-    1-5 lưu điểm có độ nguy hiểm từ thấp đến cao,
-    -1 là rơi vào trạng thái tồi, cần phòng thủ
-    '''
-    
+def score_calculate(sumcol):
+ 
     if 1 in sumcol[5].values():
         return 5
     elif len(sumcol[4])>=2 or (len(sumcol[4])>=1 and max(sumcol[4].values())>=2):
-        return 4
-    elif TF34score(sumcol[3],sumcol[4]):
         return 4
     else:
         score3 = sorted(sumcol[3].values(), reverse = True)

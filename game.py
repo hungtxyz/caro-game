@@ -1,5 +1,6 @@
 import pygame
 from minimax import best_move
+from copy import deepcopy
 # Define some colors
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -15,7 +16,7 @@ square_width = 40
 square_height = 40
 play_size = 15
 window_width = square_width * play_size + play_size + 1 + 200
-window_height = square_height * play_size + play_size + 1
+window_height = square_height * play_size + play_size + 1 +30
 
 # This sets the margin between each cell
 MARGIN = 1
@@ -58,7 +59,7 @@ def draw_board(play_size, grid):
                                              int((MARGIN + square_height) * row + MARGIN+square_height/2)],13)
             else:
                 pygame.draw.rect(screen, color, [(MARGIN + square_width) * column + MARGIN,
-                                             (MARGIN + square_height) * row + MARGIN, square_width, square_height])
+                                             (MARGIN + square_height) * row + MARGIN, square_width, square_height])                
 def draw_status(status, win_row):
     font = pygame.font.SysFont("comicsansms", 30)
 
@@ -204,7 +205,8 @@ while loop:
                         player_turn = False
 
             elif (not player_turn) and loop and not end:  # bot turn
-                move = best_move(board, 'b')
+                matrix = deepcopy(board)
+                move = best_move(matrix, 'b')
                 board[move[0]][move[1]] = 'b'
                 move_history.append([move[0],move[1]])
                 k, win_row = game_status(board,play_size)
